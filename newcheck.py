@@ -53,8 +53,8 @@ def make_api_request(pan_number):
         print(f"An error occurred: {e}")
         return False, f"API Request Error: {str(e)}"
 
-def process_all_records_one_by_one(db_path, table_name):
-    """Process all records one by one with immediate updates"""
+def process_records_by_pan(db_path, table_name, limit=108357, offset=1999):
+    """Process records using PAN Number as key with immediate updates"""
     conn = connect_to_database(db_path)
     if not conn:
         return False
@@ -73,43 +73,46 @@ def process_all_records_one_by_one(db_path, table_name):
             cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN last_checked TEXT")
         conn.commit()
         
-        # Get all records that need processing
+        # Get all PANs that need processing with OFFSET and LIMIT
         cursor.execute(f"""
-        SELECT rowid, * FROM {table_name} 
+        SELECT DISTINCT `PAN Number` FROM {table_name}
         WHERE pan_valid IS NULL OR pan_msg IS NULL
-        ORDER BY rowid
-        LIMIT 108357  OFFSET 1999 
+        ORDER BY `PAN Number` desc
+        LIMIT {limit} OFFSET {offset}
         """)
-        records = cursor.fetchall()
+        pan_numbers = [row[0] for row in cursor.fetchall()]
         
-        if not records:
-            print("No unprocessed records found")
+        if not pan_numbers:
+            print("No unprocessed PAN numbers found")
             return True
         
-        print(f"Found {len(records)} records to process")
+        print(f"Found {len(pan_numbers)} PAN numbers to process")
         
-        # Process each record with progress bar
-        for record in tqdm(records, desc="Processing records"):
-            rowid = record[0]
-            pan_number = str(record[1]).strip().upper()  # Assuming PAN is first column
+        # Process each PAN with progress bar
+        for pan_number in tqdm(pan_numbers, desc="Processing PAN numbers"):
+            clean_pan = str(pan_number).strip().upper()
             
+            # Skip empty PANs
+            if not clean_pan:
+                continue
+                
             # Make API request with rate limiting
-            time.sleep(5)  # 10 second delay between requests
-            pan_valid, pan_msg = make_api_request(pan_number)
-            
-            # Update the record immediately
+            time.sleep(10)  # 10 second delay between requests
+            pan_valid, pan_msg = make_api_request(clean_pan)
+            print(pan_msg, clean_pan)
+            # Update all records with this PAN number
             update_query = f"""
             UPDATE {table_name}
             SET pan_valid = ?,
                 pan_msg = ?,
                 last_checked = ?
-            WHERE rowid = ?
+            WHERE `PAN Number` = ?
             """
             cursor.execute(update_query, (
                 int(pan_valid) if pan_valid is not None else None,
                 pan_msg,
                 datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                rowid
+                clean_pan
             ))
             conn.commit()
             
@@ -126,9 +129,13 @@ if __name__ == "__main__":
     DB_PATH = "mydatabase.db"
     TABLE_NAME = "excel_data"
     
-    success = process_all_records_one_by_one(DB_PATH, TABLE_NAME)
+    # Configuration
+    PROCESS_LIMIT = 108357  # Maximum number of PANs to process
+    PROCESS_OFFSET = 1999   # Starting offset
+    
+    success = process_records_by_pan(DB_PATH, TABLE_NAME, PROCESS_LIMIT, PROCESS_OFFSET)
     
     if success:
-        print("All records processed successfully!")
+        print("PAN verification completed successfully!")
     else:
         print("Processing completed with errors")
