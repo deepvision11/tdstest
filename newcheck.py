@@ -94,7 +94,7 @@ def process_all_records_one_by_one(db_path, table_name):
             pan_number = str(record[1]).strip().upper()  # Assuming PAN is first column
             
             # Make API request with rate limiting
-            time.sleep(10)  # 10 second delay between requests
+            time.sleep(5)  # 10 second delay between requests
             pan_valid, pan_msg = make_api_request(pan_number)
             
             # Update the record immediately
