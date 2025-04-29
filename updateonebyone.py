@@ -68,7 +68,7 @@ def get_next_unprocessed_record(conn, table_name):
         FROM `{table_name}`
         WHERE pan_msg IS NULL
         ORDER BY total_tds DESC
-        LIMIT 1000 OFFSET 0
+        LIMIT 1 OFFSET 0
         """)
         return cursor.fetchone()
     except Error as e:
