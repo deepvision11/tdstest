@@ -71,7 +71,8 @@ def get_next_unprocessed_record(conn, table_name):
         FROM `{table_name}`
         WHERE pan_msg IS NULL
         ORDER BY `Amount of Payment` DESC
-        LIMIT 1
+        LIMIT 100000 offset 0
+        
         """)
         
         return cursor.fetchone()
@@ -80,9 +81,10 @@ def get_next_unprocessed_record(conn, table_name):
         print(f"Error fetching next record: {e}")
         return None
 
-def update_record(conn, table_name, record_id, is_valid, message):
+def update_record(connnew, table_name, record_id, is_valid, message):
     """Update the processed record in database"""
     try:
+        conn = create_mysql_connection()
         cursor = conn.cursor()
         update_query = f"""
         UPDATE `{table_name}`
