@@ -66,7 +66,7 @@ def get_next_unprocessed_record(conn, table_name):
         cursor.execute(f"""
         SELECT pan, name, total_tds
         FROM `{table_name}`
-        WHERE pan_msg IS NULL
+        WHERE pan_msg IS NULL OR pan_msg =0 
         ORDER BY total_tds DESC
         LIMIT 1 OFFSET 0
         """)
