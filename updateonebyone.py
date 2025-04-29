@@ -72,7 +72,6 @@ def get_next_unprocessed_record(conn, table_name):
         WHERE pan_msg IS NULL
         ORDER BY `Amount of Payment` DESC
         LIMIT 1
-        FOR UPDATE SKIP LOCKED
         """)
         
         return cursor.fetchone()
