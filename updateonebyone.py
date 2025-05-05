@@ -38,7 +38,7 @@ def make_api_request(pan_number):
     for attempt in range(3):  # Retry up to 3 times
         try:
             response = requests.post(url, headers=headers, json=payload, timeout=15)
-
+            print(f"Attempt {attempt+1}: Response status code: {response.status_code}")
             if response.status_code == 200:
                 data = response.json()
                 desc = data['messages'][0]['desc'] if data['messages'] else "No message available"
@@ -160,7 +160,7 @@ def process_records_one_by_one(table_name):
     return total_errors == 0
 
 if __name__ == "__main__":
-    TABLE_NAME = "tds_data_haanaa"
+    TABLE_NAME = "tds_data_haanaa_2"
 
     print("Starting PAN verification process...")
     success = process_records_one_by_one(TABLE_NAME)
