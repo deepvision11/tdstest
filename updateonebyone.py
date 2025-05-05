@@ -78,6 +78,7 @@ def get_next_unprocessed_record(conn, table_name):
 def update_record(conn, table_name, pan, is_valid, message):
     """Update the processed record in database by PAN"""
     try:
+        conn = create_mysql_connection()
         cursor = conn.cursor()
         update_query = f"""
         UPDATE `{table_name}`
